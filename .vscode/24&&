@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "dbaeumer.vscode-eslint",
+    "EditorConfig.EditorConfig",
+    "Vue.volar",
+    "vitest.explorer",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}
