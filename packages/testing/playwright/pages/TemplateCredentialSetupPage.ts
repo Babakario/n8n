@@ -4,7 +4,12 @@ import { BasePage } from './BasePage';
 import { CredentialModal } from './components/CredentialModal';
 
 export class TemplateCredentialSetupPage extends BasePage {
-	readonly credentialModal = new CredentialModal(this.page.getByTestId('editCredential-modal'));
+	async goto(templateId: number) {
+		await this.page.goto(`/templates/${templateId}/setup`);
+	}
+
+	readonly credentialModal = CredentialModal.fromPage(this.page);
+
 	getTitle(titleText: string): Locator {
 		return this.page.getByRole('heading', { name: titleText, level: 1 });
 	}
@@ -31,6 +36,18 @@ export class TemplateCredentialSetupPage extends BasePage {
 
 	getContinueButton(): Locator {
 		return this.page.getByTestId('continue-button');
+	}
+
+	getCanvasSetupButton(): Locator {
+		return this.page.getByTestId('setup-credentials-button');
+	}
+
+	getCanvasCredentialModal(): Locator {
+		return this.page.getByTestId('setup-workflow-credentials-modal');
+	}
+
+	getSetupCredentialModalSteps(): Locator {
+		return this.getCanvasCredentialModal().getByTestId('setup-credentials-form-step');
 	}
 
 	getCreateCredentialButton(appName: string): Locator {

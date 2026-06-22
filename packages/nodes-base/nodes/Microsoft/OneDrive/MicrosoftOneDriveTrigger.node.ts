@@ -8,7 +8,12 @@ import {
 	NodeConnectionTypes,
 } from 'n8n-workflow';
 
-import { getPath, microsoftApiRequest, microsoftApiRequestAllItemsDelta } from './GenericFunctions';
+import {
+	getOneDriveCredentialType,
+	getPath,
+	microsoftApiRequest,
+	microsoftApiRequestAllItemsDelta,
+} from './GenericFunctions';
 import { triggerDescription } from './TriggerDescription';
 
 export class MicrosoftOneDriveTrigger implements INodeType {
@@ -27,12 +32,47 @@ export class MicrosoftOneDriveTrigger implements INodeType {
 			{
 				name: 'microsoftOneDriveOAuth2Api',
 				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['microsoftOneDriveOAuth2Api'],
+					},
+				},
+			},
+			{
+				name: 'microsoftOAuth2Api',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['microsoftOAuth2Api'],
+					},
+				},
 			},
 		],
 		polling: true,
 		inputs: [],
 		outputs: [NodeConnectionTypes.Main],
-		properties: [...triggerDescription],
+		properties: [
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'OneDrive OAuth2',
+						value: 'microsoftOneDriveOAuth2Api',
+					},
+					{
+						name: 'Microsoft OAuth2 (Graph)',
+						value: 'microsoftOAuth2Api',
+						description:
+							'Generic Microsoft Graph credential. Enable the scopes this node needs (e.g. Files.ReadWrite.All) on the credential.',
+					},
+				],
+				default: 'microsoftOneDriveOAuth2Api',
+			},
+			...triggerDescription,
+		],
 	};
 
 	methods = {
@@ -43,9 +83,15 @@ export class MicrosoftOneDriveTrigger implements INodeType {
 		const workflowData = this.getWorkflowStaticData('node');
 		let responseData: IDataObject[];
 
+		const credentials = await this.getCredentials(getOneDriveCredentialType.call(this));
+		const baseUrl = (
+			typeof credentials.graphApiBaseUrl === 'string' && credentials.graphApiBaseUrl !== ''
+				? credentials.graphApiBaseUrl
+				: 'https://graph.microsoft.com'
+		).replace(/\/+$/, '');
+
 		const lastLink: string =
-			(workflowData.LastLink as string) ||
-			'https://graph.microsoft.com/v1.0/me/drive/root/delta?token=latest';
+			(workflowData.LastLink as string) || `${baseUrl}/v1.0/me/drive/root/delta?token=latest`;
 
 		const now = DateTime.now().toUTC();
 		const start = DateTime.fromISO(workflowData.lastTimeChecked as string) || now;
@@ -72,7 +118,7 @@ export class MicrosoftOneDriveTrigger implements INodeType {
 						'',
 						{},
 						{},
-						'https://graph.microsoft.com/v1.0/me/drive/root/delta',
+						`${baseUrl}/v1.0/me/drive/root/delta`,
 					)
 				).value as IDataObject[];
 			} else {

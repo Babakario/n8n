@@ -1,4 +1,4 @@
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
 
 import {
@@ -10,29 +10,30 @@ import {
 } from '../../GenericFunctions';
 import type { GmailMessage, GmailMessageMetadata, GmailUserProfile } from '../../types';
 import { replyToEmail } from '../../utils/replyToEmail';
+import type * as _importType0 from '../../GenericFunctions';
 
-jest.mock('../../GenericFunctions', () => ({
+vi.mock('../../GenericFunctions', async () => ({
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	...jest.requireActual('../../GenericFunctions'),
-	googleApiRequest: jest.fn(),
-	prepareEmailsInput: jest.fn(),
-	prepareEmailAttachments: jest.fn(),
-	prepareEmailBody: jest.fn(),
-	encodeEmail: jest.fn(),
+	...(await vi.importActual<typeof _importType0>('../../GenericFunctions')),
+	googleApiRequest: vi.fn(),
+	prepareEmailsInput: vi.fn(),
+	prepareEmailAttachments: vi.fn(),
+	prepareEmailBody: vi.fn(),
+	encodeEmail: vi.fn(),
 }));
 
-const mockedGoogleApiRequest = jest.mocked(googleApiRequest);
-const mockedPrepareEmailsInput = jest.mocked(prepareEmailsInput);
-const mockedPrepareEmailAttachments = jest.mocked(prepareEmailAttachments);
-const mockedPrepareEmailBody = jest.mocked(prepareEmailBody);
-const mockedEncodeEmail = jest.mocked(encodeEmail);
+const mockedGoogleApiRequest = vi.mocked(googleApiRequest);
+const mockedPrepareEmailsInput = vi.mocked(prepareEmailsInput);
+const mockedPrepareEmailAttachments = vi.mocked(prepareEmailAttachments);
+const mockedPrepareEmailBody = vi.mocked(prepareEmailBody);
+const mockedEncodeEmail = vi.mocked(encodeEmail);
 
 describe('replyToEmail', () => {
 	let mockExecuteFunctions: IExecuteFunctions;
 
 	beforeEach(() => {
 		mockExecuteFunctions = mock<IExecuteFunctions>();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		mockedPrepareEmailsInput.mockReturnValue('test@example.com, ');
 		mockedPrepareEmailAttachments.mockResolvedValue([]);
@@ -87,7 +88,7 @@ describe('replyToEmail', () => {
 			.mockResolvedValueOnce(mockSentMessage); // POST send message
 
 		const options: IDataObject = {};
-		const result = await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		const result = await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedGoogleApiRequest).toHaveBeenNthCalledWith(
 			1,
@@ -139,7 +140,7 @@ describe('replyToEmail', () => {
 			ccList: 'cc@example.com',
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedPrepareEmailsInput).toHaveBeenCalledWith('cc@example.com', 'CC', 0);
 
@@ -164,7 +165,7 @@ describe('replyToEmail', () => {
 			bccList: 'bcc@example.com',
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedPrepareEmailsInput).toHaveBeenCalledWith('bcc@example.com', 'BCC', 0);
 
@@ -196,7 +197,7 @@ describe('replyToEmail', () => {
 			},
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedPrepareEmailAttachments).toHaveBeenCalledWith(options.attachmentsUi, 0);
 
@@ -245,7 +246,7 @@ describe('replyToEmail', () => {
 			replyToSenderOnly: true,
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Verify that only the sender is included in the "To" field
 		expect(mockedEncodeEmail).toHaveBeenCalledWith(
@@ -284,7 +285,7 @@ describe('replyToEmail', () => {
 			replyToRecipientsOnly: true,
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should filter out the current user's email from recipients and exclude sender
 		expect(mockedEncodeEmail).toHaveBeenCalledWith(
@@ -317,7 +318,7 @@ describe('replyToEmail', () => {
 			senderName: 'Custom Sender Name',
 		};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedEncodeEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -347,7 +348,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should handle both formats correctly
 		expect(mockedGoogleApiRequest).toHaveBeenNthCalledWith(
@@ -383,7 +384,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedGoogleApiRequest).toHaveBeenCalledTimes(3);
 
@@ -414,7 +415,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should handle missing subject gracefully (empty string)
 		expect(mockedGoogleApiRequest).toHaveBeenCalledTimes(3);
@@ -440,7 +441,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should handle missing message ID gracefully (empty string)
 		expect(mockedGoogleApiRequest).toHaveBeenCalledTimes(3);
@@ -459,7 +460,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedPrepareEmailBody).toHaveBeenCalledWith(0);
 	});
@@ -485,7 +486,7 @@ describe('replyToEmail', () => {
 			.mockReturnValueOnce('cc@example.com, ')
 			.mockReturnValueOnce('bcc@example.com, ');
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		expect(mockedEncodeEmail).toHaveBeenCalledWith({
 			from: 'Test Sender <user@gmail.com>',
@@ -520,7 +521,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should handle missing headers with empty strings
 		expect(mockedEncodeEmail).toHaveBeenCalledWith(
@@ -554,7 +555,7 @@ describe('replyToEmail', () => {
 
 		const options: IDataObject = {};
 
-		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0);
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
 
 		// Should properly format emails with brackets
 		expect(mockedEncodeEmail).toHaveBeenCalledWith(
@@ -567,6 +568,64 @@ describe('replyToEmail', () => {
 			expect.objectContaining({
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				to: expect.stringContaining('Name <with@brackets.com>'), // Should keep existing brackets
+			}),
+		);
+	});
+
+	test('should use ignore Reply-To header, when Reply-To header is provided for version < 2.2', async () => {
+		const messageWithReplyToHeader = {
+			...mockMessageMetadata,
+			payload: {
+				...mockMessageMetadata.payload,
+				headers: [
+					...mockMessageMetadata.payload.headers,
+					{ name: 'Reply-To', value: 'reply-to@example.com' },
+				],
+			},
+		};
+
+		mockedGoogleApiRequest
+			.mockResolvedValueOnce(messageWithReplyToHeader)
+			.mockResolvedValueOnce(mockUserProfile)
+			.mockResolvedValueOnce(mockSentMessage);
+
+		const options: IDataObject = {};
+
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.1);
+
+		expect(mockedEncodeEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				to: expect.stringContaining('<john@example.com>'),
+			}),
+		);
+	});
+
+	test('should use Reply-To header instead of From, when Reply-To header is provided for version >= 2.2', async () => {
+		const messageWithReplyToHeader = {
+			...mockMessageMetadata,
+			payload: {
+				...mockMessageMetadata.payload,
+				headers: [
+					...mockMessageMetadata.payload.headers,
+					{ name: 'Reply-To', value: 'reply-to@example.com' },
+				],
+			},
+		};
+
+		mockedGoogleApiRequest
+			.mockResolvedValueOnce(messageWithReplyToHeader)
+			.mockResolvedValueOnce(mockUserProfile)
+			.mockResolvedValueOnce(mockSentMessage);
+
+		const options: IDataObject = {};
+
+		await replyToEmail.call(mockExecuteFunctions, 'message123', options, 0, 2.2);
+
+		expect(mockedEncodeEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				to: expect.stringContaining('<reply-to@example.com>'),
 			}),
 		);
 	});

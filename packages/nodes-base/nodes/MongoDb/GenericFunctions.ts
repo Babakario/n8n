@@ -5,7 +5,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import type {
 	ICredentialDataDecryptedObject,
 	IDataObject,
-	IExecuteFunctions,
+	INode,
 	INodeExecutionData,
 } from 'n8n-workflow';
 import { createSecureContext } from 'tls';
@@ -37,7 +37,7 @@ export function buildParameterizedConnString(credentials: IMongoParametricCreden
  * @param {ICredentialDataDecryptedObject} credentials raw/input MongoDB credentials to use
  */
 export function buildMongoConnectionParams(
-	self: IExecuteFunctions,
+	node: INode,
 	credentials: IMongoCredentialsType,
 ): IMongoCredentials {
 	const sanitizedDbName =
@@ -52,7 +52,7 @@ export function buildMongoConnectionParams(
 			};
 		} else {
 			throw new NodeOperationError(
-				self.getNode(),
+				node,
 				'Cannot override credentials: valid MongoDB connection string not provided ',
 			);
 		}
@@ -70,14 +70,32 @@ export function buildMongoConnectionParams(
  * @param {ICredentialDataDecryptedObject} credentials raw/input MongoDB credentials to use
  */
 export function validateAndResolveMongoCredentials(
-	self: IExecuteFunctions,
+	node: INode,
 	credentials?: ICredentialDataDecryptedObject,
 ): IMongoCredentials {
 	if (credentials === undefined) {
-		throw new NodeOperationError(self.getNode(), 'No credentials got returned!');
+		throw new NodeOperationError(node, 'No credentials got returned!');
 	} else {
-		return buildMongoConnectionParams(self, credentials as unknown as IMongoCredentialsType);
+		return buildMongoConnectionParams(node, credentials as unknown as IMongoCredentialsType);
 	}
+}
+
+function isScalarUpdateKeyValue(
+	value: unknown,
+): value is string | number | boolean | bigint | Date | null {
+	if (value === null) return true;
+	const type = typeof value;
+	if (type === 'string' || type === 'number' || type === 'boolean' || type === 'bigint') {
+		return true;
+	}
+	return value instanceof Date;
+}
+
+function describeUpdateKeyValueType(value: unknown): string {
+	if (value === null) return 'null';
+	if (Array.isArray(value)) return 'array';
+	if (value instanceof Date) return 'date';
+	return typeof value;
 }
 
 export function prepareItems({
@@ -87,6 +105,7 @@ export function prepareItems({
 	useDotNotation = false,
 	dateFields = [],
 	isUpdate = false,
+	node,
 }: {
 	items: INodeExecutionData[];
 	fields: string[];
@@ -94,6 +113,7 @@ export function prepareItems({
 	useDotNotation?: boolean;
 	dateFields?: string[];
 	isUpdate?: boolean;
+	node: INode;
 }) {
 	let data = items;
 
@@ -104,7 +124,7 @@ export function prepareItems({
 		data = items.filter((item) => item.json[updateKey] !== undefined);
 	}
 
-	const preparedItems = data.map(({ json }) => {
+	const preparedItems = data.map(({ json }, itemIndex) => {
 		const updateItem: IDataObject = {};
 
 		for (const field of fields) {
@@ -118,6 +138,17 @@ export function prepareItems({
 
 			if (fieldData && dateFields.includes(field)) {
 				fieldData = new Date(fieldData as string);
+			}
+
+			if (field === updateKey && !isScalarUpdateKeyValue(fieldData)) {
+				throw new NodeOperationError(
+					node,
+					`The value of "${updateKey}" must be a string, number, boolean, or date`,
+					{
+						itemIndex,
+						description: `Got ${describeUpdateKeyValueType(fieldData)} instead. Objects and arrays are not allowed as the match value.`,
+					},
+				);
 			}
 
 			if (useDotNotation && !isUpdate) {

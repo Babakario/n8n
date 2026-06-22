@@ -1,6 +1,6 @@
 import type { Iso8601DateTimeString } from '@n8n/api-types';
 import type { ICredentialsDecrypted, ICredentialsEncrypted, ICredentialType } from 'n8n-workflow';
-import type { ProjectSharingData } from '@/features/projects/projects.types';
+import type { ProjectSharingData } from '@/features/collaboration/projects/projects.types';
 import type { Scope } from '@n8n/permissions';
 import type { IUserResponse } from '@n8n/rest-api-client/api/users';
 
@@ -14,6 +14,12 @@ export interface ICredentialsResponse extends ICredentialsEncrypted {
 	scopes?: Scope[];
 	ownedBy?: Pick<IUserResponse, 'id' | 'firstName' | 'lastName' | 'email'>;
 	isManaged: boolean;
+	isGlobal?: boolean;
+	isResolvable?: boolean;
+	/** Whether the current user has personally connected this credential. Set on resolvable credentials only. */
+	connectedByMe?: boolean;
+	/** Total number of users connected to this credential. Set on resolvable credentials only. */
+	connectedUserCount?: number;
 }
 
 export interface IUsedCredential {
@@ -32,6 +38,11 @@ export interface ICredentialsBase {
 
 export interface ICredentialsDecryptedResponse extends ICredentialsBase, ICredentialsDecrypted {
 	id: string;
+	isResolvable?: boolean;
+	/** Whether the current user has personally connected this credential. Set on resolvable credentials only. */
+	connectedByMe?: boolean;
+	/** Total number of users connected to this credential. Set on resolvable credentials only. */
+	connectedUserCount?: number;
 }
 
 export interface ICredentialTypeMap {
